@@ -1,117 +1,132 @@
-# API design assignment
+We will implement a simplified **Movie Database API**, where users can retrieve information about movies, cast, and rating.
 
-In this assignment, you will implement a web API following the theory of REST. We encourage you to have your ideas about the API service to build. Maybe you have some idea you want to start with through an API-driven design? For those of you without any ideas, we present a scenario below. That will also give a hint of the extent of this assignment.
+[Download Movie dataset as csv files](https://www.kaggle.com/datasets/rounakbanik/the-movies-dataset)
 
-## Overall requirements
+This dataset consists of many files, but the minimum you would need is:
 
-You are expected to have error handling, security, good code structure, accessibility through HTTP/HTTPS, and so on. Below are two sets of requirements for this assignment. To PASS the Web APIs module project, you must fulfill all the "mandatory" requirements and at least five linguistic design rules. The "linguistic design rules" are introduced in the lectures. Watch/follow them! You are free to choose your implementation or use our proposed suggestion. You are free to choose any frameworks, libraries, and modules for solving this assignment as long as the examiners can test your solution easily. Please read the **MUST** and **SHOULD** carefully.
+- **movies_metadata.csv**: The main Movies Metadata file. Contains information on 45,000 movies featured in the Full MovieLens dataset. Features include posters, backdrops, budget, revenue, release dates, languages, production countries, and companies.
 
-## Mandatory API design requirements
+- **credits.csv**: Consists of cast and crew information for all our movies, available in the form of a stringified JSON object.
 
-* The API MUST at least support representations with "application/json"
-* The API should try to follow the constraints for RESTful APIs
-* The API MUST embrace the idea of HATEOAS. The API should have one entry point and use HATEOAS for making the API browsable.
-* The API should allow the client to create, read, update and delete resources. You MUST have at least one call for GET, PUT, POST, and DELETE methods.
-* Unsafe HTTP methods and data about users in the system should require authentication done through the API with the implementation of JWT tokens.
-* The API MUST give some ability to register a webhook, which will fire on some of your chosen events.
-* In your examination repository, you MUST provide a [POSTMAN](https://chrome.google.com/webstore/detail/postman/fhbjgbiflinjbdggehcddcbncdddomop) collection. The examiner MUST be able to load this into the POSTMAN application or a [NEWMAN CLI](https://www.getpostman.com/docs/postman/collection_runs/command_line_integration_with_newman) and test your API without ANY further configuration. For more information about POSTMAN and NEWMAN see this article: [https://scotch.io/tutorials/write-api-tests-with-postman-and-newman]
-* Do not forget to make calls that show your error handling like bad requests, wrong credentials, and so on.
-* The code MUST be published in your examination repository along with a report (see below).
-* Your solution MUST be testable without any configuration, installations of servers, and so on. Preferably, the API will be testable through a public URL. Any instructions on how to test your solution should be in your repository README.md.
-* The code MUST be "individually" created. The examiners may run a code anti-plagiarism tool on your code. Plagiarism will be seriously considered and reported for action.
-* Make a script file that automatically populated your application with some data for testing.
+- **ratings_small.csv**: A subset of 100,000 ratings from 700 users on 9,000 movies.
 
-## Linguistic design rules for APIs (MUST implement at least five rules)
+#### **Suggested Entities:**
 
-* rule 1: Forward slash separator (/) must be used to indicate a "hierarchical relationship".
-* rule 2: A trailing forward slash (/) should not be included in URIs.
-* rule 3: Hyphens (-) should be used to improve the readability of URIs.
-* rule 4: Underscores (_) should not be used in URIs.
-* rule 5: Lowercase letters should be preferred in URI paths.
-* rule 6: File extensions should not be included in URIs.
-* rule 7: A "singular" noun should be used for document names.
-* rule 8: A "plural" noun should be used for collection names.
-* rule 9: A plural noun should be used for store names.
-* rule 10: CRUD function names or their synonyms should not be used in URIs.
-* rule 11: A verb or verb phrase should be used for controller names.
-* rule 12: The query component of a URI may be used to filter collections or stores.
-* rule 13: The query component of a URI should be used to paginate collection or store results.
+- **Movie** (id, title, release_year, genre, description)
+- **Actor** (id, name, movies_played)
+- **Rating** (id, text, movie)
 
-## Our suggestion for those without any ideas
+---
 
-Develop a **Beehive Monitoring REST API** for the IoT Lab in Kalmar. 
+## **General Requirements**
 
-Design a REST API that comprehensively monitors mobile beehive platforms. The API should provide authenticated access to the reported honeybee data and capture requests for mobile platform transport.
-You can use this dataset to mock some of the real-life sensor data for the API to fetch: [Beehive metrics on Kaggle](https://www.kaggle.com/datasets/se18m502/bee-hive-metrics/data).
+### **Mandatory API Features (Both REST and GraphQL)**
 
-The API should handle requests to get the following data:
+- The API **MUST** support `application/json`.
+- Authentication **MUST** be implemented using JWT tokens for modifying resources.
+- The API **MUST** allow users to **create, read, update, and delete movies**, while **actors and ratings are read-only**.
+- The API **MUST** include **error handling** for incorrect input, authentication failures, and missing resources.
+- A **Postman collection** (exported as JSON) **MUST** be provided for testing and included in the CI/CD pipeline. [Testing requirements](TESTING.md) **MUST** be followed.
+- A **seed script** **MUST** be included to populate the database with sample data.
+- The API **MUST** be documented using **Swagger/OpenAPI OR Postman documentation**.
+- A **GraphQL Playground** **MUST** be available for GraphQL testing.
+- A **link to the API documentation** **MUST** be provided.
 
-* Hive Status: Returns current status values (location, humidity, weight and temperature) for a given beehive (by id)
-* Hive Humidity: Provides humidity data for a specific hive over a given period
-* Hive Weight: Fetches weight data for a specific hive for a given period
-* Hive Temperature: Retrieves temperature data of a specific hive over a selected timeframe
-* Hive Arrival & Departure Flow: Fetches the number of bee arrivals and departures from a specific hive within a selected timeframe
+---
 
-The API should handle the following requests to save data:
+## **Group 1: REST API Implementation**
 
-* IoT Lab admins and farmers can register a new beehive or delete an existing one
-*  IoT Lab admins and farmers can update beehive information (location, name)
-* Farmers can request a mobile platform for their fields by specifing date and location that they want to get the hive to. 
-* Farmers can report how much honey they have harvested on a certain date. 
+### **REST-Specific Requirements**
 
-To do unsafe HTTP calls, the API MUST have Authentication/Authorization. A user should be able to sign in through the API safely (see requirements).
+- The API **SHOULD** follow RESTful principles, including resource-based URLs and proper HTTP methods.
+- The API **MUST** implement HATEOAS (Hypermedia as the Engine of Application State).
+- The API **MUST** include the following endpoints:
+  - `GET /movies` - Retrieve all movies.
+  - `GET /movies/{id}` - Get details of a specific movie.
+  - `POST /movies` - Add a new movie (**Requires authentication**).
+  - `PUT /movies/{id}` - Update a movie (**Requires authentication**).
+  - `DELETE /movies/{id}` - Delete a movie (**Requires authentication**).
+  - `GET /movies/{id}/ratings` - Retrieve ratings for a specific movie.
+  - `GET /actors` - Retrieve all actors.
+  - `GET /ratings` - Retrieve all ratings.
+- The API **MUST** support query parameters for filtering (e.g., `GET /movies?genre=Action&year=2020`).
+- The API **MUST** support pagination for large result sets.
+- Swagger or Postman **MUST** be used for documentation, including an interactive playground for trying out requests.
 
-Of course, you are free to implement additional features in your web API.
+---
 
-## Report
+## **Group 2: GraphQL API Implementation**
 
-This examination is a hand-in assignment. You will need to defend your design decisions in writing by answering the questions below in a report. These questions should be answered in your Merge Request Assignment Report. _(See details under "Hand in" below)_
+### **GraphQL-Specific Requirements**
 
-The report should include the course code, course name, your name, and an introduction describing the problem you have tried to solve.
+- The API **SHOULD** provide a **single endpoint (`/graphql`)** where all queries and mutations are handled.
+- The API **MUST** support the following GraphQL operations:
+  - `movies` - Fetch all movies, optionally filtering by genre or year.
+  - `movie(id: ID!)` - Fetch details of a specific movie.
+  - `addMovie(title: String!, release_year: Int!, genre: String!)` - Add a new movie (**Requires authentication**).
+  - `updateMovie(id: ID!, title: String, release_year: Int, genre: String)` - Update a movie (**Requires authentication**).
+  - `deleteMovie(id: ID!)` - Delete a movie (**Requires authentication**).
+  - `ratings(movie_id: ID!)` - Fetch ratings for a specific movie.
+  - `actors` - Fetch all actors.
+- The API **MUST** allow at least one **nested query** (e.g., fetch a movie along with its ratings in one request).
+- The API **MUST** provide documentation via **Swagger/OpenAPI or Postman documentation**.
+- A **GraphQL Playground** **MUST** be available for query exploration.
 
-The following questions **MUST** be answered in the report.
+---
 
-1. Explain and defend your implementation of HATEOAS in your solution.
-2. If your solution should implement multiple representations of the resources. How would you do it?
-3. Motivate and defend your authentication solution.
- 3a. What other authentication solutions could you implement?
- 3b. What are the pros/cons of this solution?
-4. Explain how your webhook works.
-5. Since this is your first own web API, there are probably things you would solve in another way, looking back at this assignment. Write your thoughts about this.
-6. Which "linguistic design rules" have you implemented? List them here and motivate "for each" of them very briefly why did you choose them? Remember that you must consider "at least" FIVE "linguistic design rules" as the linguistic quality of your API.
-7. Did you do something extra besides the fundamental requirements? Explain them.
+## **Peer Review & Reflection**
 
-## Documentation
+After implementation, each student will **review an API from the opposite group** and compare:
 
-**Do not miss it!** This project requires you to produce comprehensive Swagger/OpenAPI documentation for your API. This is important, as having well-documented APIs can aid other developers in understanding how your services work.
+1. **Ease of use**: Which API is more intuitive for a developer?
+2. **Performance**: How do the number of requests and response sizes compare?
+3. **Flexibility**: Which API allows for more efficient data fetching with minimal over-fetching or under-fetching?
+4. **Error handling**: How well are invalid requests and failures handled?
+5. **Authentication & Security**: How are authentication and authorization implemented?
+6. **Maintainability**: Which implementation is easier to extend and modify?
+7. **Documentation & Testing**: How clear is the documentation, and how easy is it to test the API using Swagger or Postman?
+8. **REST-Specific Considerations:**
+   - Does the REST API provide well-structured resource-based URLs?
+   - How does HATEOAS improve navigation and discoverability?
+   - How do query parameters and pagination affect efficiency?
+   - Are the HTTP methods and status codes used correctly?
+   - How does the REST API compare in terms of verbosity and over-fetching?
+9. **GraphQL-Specific Considerations:**
+   - How does GraphQL's single endpoint approach compare to multiple RESTful endpoints?
+   - How do nested queries improve or complicate fetching related data?
+   - How does the type system in GraphQL enhance or limit flexibility?
 
-Swagger/OpenAPI tools can generate documentation automatically from your code comments and docstrings. It's important to include relevant information about each endpoint and HTTP method in the comments to make the auto-generated documentation useful.
+Each student must submit a **peer review reflection** comparing their API to the opposite implementation. This should be submitted as a **commentary on the merge request**.
 
-For instance, if you have a resource URI like www.example.com/beehives/{id} and it supports the GET, PUT, POST, and DELETE HTTP methods, you should provide comments for each method in your code. 
+---
 
-Here's how it could look like:
+## **Submission Requirements**
 
-* For GET www.example.com/beehives/{id} : Include a comment in your code explaining that this method is used to retrieve information about a specific beehive.
+- Source code in a public repository (GitHub/GitLab/Bitbucket).
+- README with setup and usage instructions.
+- **Postman collection (exported as JSON)**  
+- Seed script for generating sample data.
+- Peer review reflection as a **commentary on the merge request**.
+- A link to the **API documentation** (Swagger or Postman).
 
-* For PUT www.example.com/beehives/{id} : Add a comment that this method allows users to update information for a specific beehive.
+---
 
-* For POST www.example.com/beehives/{id} : State in a comment that this method is designed for users to add new data for a specific beehive. 
+## **Checklist for your assignment**
 
-* For DELETE www.example.com/beehives/{id} : Specify in a comment that this method gives users the ability to delete specific records of a beehive.
+- **API Completeness**: Required endpoints/queries are implemented correctly.
+- **Code Quality & Documentation**: Clear, well-structured, and documented code.
+- **Authentication & Security**: Proper JWT authentication.
+- **Error Handling & Testing**: Handles invalid input, missing resources
+- **Automated Tests in CI/CD**: Tests are run via CI/CD pipeline and are fully automated. 
+- **Peer Review **: Thoughtful analysis and comparison of the other group's API.
 
-With proper comments for each endpoint and method, Swagger/OpenAPI can generate an interactive and user-friendly documentation that developers can use to understand and navigate your API’s resources. Moreover, it provides the possibility to test API calls directly from the browser.
+---
 
+## **Final Notes**
 
-## Examination
-
-The grade for this assignment is F (fail), F/C (fail, with options to complement for pass), and P (pass). We will take note of your effort and give you grades like P-, P, or P+ that could affect your final grade on this course. 
-We will look at the "linguistic design quality" and "structure" of the API and the code, how easy your API is to understand, the extent of your effort, and the easiness for the examiner to test your solution.
-
-## Hints
-
-* Start by making a plan on how to solve the assignment. What do you have to do? What steps do you have to take? What do you need to know and learn? Plan your work and plan early!
-* Start with your resources/models. Create them and write a seed script that fills your storage with some data to play with when testing your API.
-* Do not spend time overdoing validation rules. In a real scenario, we should, but in this assignment, the API is the most important.
-* Maybe a simple client application will help you develop a good API, especially with respect to HATEOAS.
-* Learning and using POSTMAN/NEWMAN is your responsibility. Make sure to read the article: [https://scotch.io/tutorials/write-api-tests-with-postman-and-newman]
-
+- Start by designing your data models.
+- REST students should focus on **endpoint structure and HATEOAS**.
+- GraphQL students should focus on **flexible queries and nested responses**.
+- Keep your API **modular and testable**.
+- Integrate testing into the **CI/CD pipeline**.
+- Have fun and **learn the trade-offs of REST vs. GraphQL!** 🚀
