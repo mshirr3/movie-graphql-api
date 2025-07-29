@@ -1,14 +1,16 @@
 {
-
   "type": "module",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/server.js"
   },
   "dependencies": {
     "@apollo/server": "^4.12.2",
     "apollo-server-express": "^3.13.0",
-    "express": "^5.1.0",
+    "csv-parser": "^3.2.0",
+    "dotenv": "^17.2.1",
+    "express": "^4.21.2",
     "graphql": "^16.11.0",
-    "graphql-tag": "^2.12.6"
+    "graphql-tag": "^2.12.6",
+    "mongoose": "^8.16.5"
   }
 }

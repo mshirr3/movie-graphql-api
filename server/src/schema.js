@@ -4,8 +4,11 @@ const typeDefs = gql`
   type Query {
     "Query to get a movie, filtered by genre or year"
     movies(genre: String, release_year: Int): [Movie]
+
     movie(id: ID!): Movie
+
     ratings(movie_id: ID!): [Rating]
+    
     actors: [Actor]
   }  
 
