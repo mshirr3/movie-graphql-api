@@ -56,3 +56,6 @@ fs.createReadStream('server/src/data/movies_metadata.csv')
             mongoose.connection.close()
         }
     })
+
+const ratings = []
+fs.createReadStream('server/src/data/ratins')
