@@ -3,6 +3,7 @@ import csv from 'csv-parser'
 import mongoose from 'mongoose'
 import dotenv from 'dotenv'
 import Movie from './models/movie.js'
+import Rating from './models/rating.js'
 
 dotenv.config()
 // mongodb setup
@@ -25,7 +26,7 @@ function parseGenre(str) {
 
 const movies = []
 // read and insert movies
-fs.createReadStream('server/src/data/movies_metadata.csv')
+fs.createReadStream('src/data/movies_metadata.csv')
     .pipe(csv({ skiplines: 0 }))
     .on('data', (row) => {
         // filter out roes with missing title or id
@@ -52,10 +53,29 @@ fs.createReadStream('server/src/data/movies_metadata.csv')
             console.log('Movies inserted success')
         } catch (error) {
             console.error('failes to insert', error)
-        } finally {
-            mongoose.connection.close()
         }
     })
 
 const ratings = []
-fs.createReadStream('server/src/data/ratins')
+fs.createReadStream('src/data/ratings_small.csv')
+    .pipe(csv({ skiplines: 0 }))
+    .on('data', (data) => {
+        ratings.push({
+            movieId: data.movieId,
+            text: data.rating
+        })
+    })
+    .on('end', async () => {
+        try {
+            await Rating.deleteMany({})
+            await Rating.insertMany(ratings)
+            console.log('Ratings data imported succesfully')
+            process.exit(0)
+        } catch (error) {
+            console.error('Error inserting data', error)
+            process.exit(1)
+        }
+        finally {
+            mongoose.connection.close()
+        }
+    })
