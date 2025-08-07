@@ -7,7 +7,7 @@ const typeDefs = gql`
 
     movie(id: ID!): Movie
 
-    ratings(movie_id: ID!): [Rating]
+    ratings(movieId: ID!): [Rating]
     
     actors: [Actor]
   }  
@@ -22,6 +22,7 @@ const typeDefs = gql`
     release_year: Int
     genre: String
     description: String
+    ratings: [Rating]
   }
 
   type Actor {
@@ -31,7 +32,7 @@ const typeDefs = gql`
   }
 
   type Rating {
-    id: ID!
+    movieId: ID!
     text: String!
     movie: Movie!
   }

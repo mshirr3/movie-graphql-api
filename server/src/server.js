@@ -19,7 +19,16 @@ async function startServer() {
 
   const server = new ApolloServer({
     typeDefs,
-    resolvers
+    resolvers,
+    formatError: (err) => {
+      if (process.env.NODE_ENV === 'production') {
+        return {
+          message: err.message,
+          code: err.extensions?.code || 'INTERNAL_SERVER_ERROR'
+        }
+      }
+      return err
+    }
   })
 
   await server.start()
