@@ -7,6 +7,7 @@ import mongoose from 'mongoose'
 import bodyParser from 'body-parser'
 import resolvers from './resolvers.js'
 import dotenv from 'dotenv'
+import jwt from 'jsonwebtoken'
 
 const app = express()
 
@@ -39,6 +40,18 @@ async function startServer() {
     bodyParser.json(),
     expressMiddleware(server, {
       context: async ({ req }) => {
+        const auth = req.headers.authorization || ''
+        const token = auth.split(' ')[1] // cause bearer token
+
+        try {
+          if (token) {
+            const user = jwt.verify(token, process.env.JWT_SECRET)
+            return { user }
+          }
+        } catch (error) {
+          console.log('invalid token')
+        }
+        // no user if token is invalid
         return { user: null }
       },
     })

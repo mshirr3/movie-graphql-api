@@ -13,10 +13,12 @@ const typeDefs = gql`
   }  
 
   type Mutation {
+    register(username: String!, password: String!): String
+    login(username: String!, password: String!): String
     addMovie(title: String!, release_year: Int!, genre: String!): Movie
   }
 
-  type Movie {
+  type Movie { 
     id: ID!
     title: String!
     release_year: Int
