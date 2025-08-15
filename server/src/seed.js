@@ -35,7 +35,7 @@ fs.createReadStream('src/data/movies_metadata.csv')
         const releaseYear = row.release_date?.split('-')[0]
 
         movies.push({
-            id: row.id,
+            csvId: row.id,
             title: row.title,
             // make sure its Int
             release_year: releaseYear ? parseInt(releaseYear): null,

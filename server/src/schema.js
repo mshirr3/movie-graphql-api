@@ -16,10 +16,13 @@ const typeDefs = gql`
     register(username: String!, password: String!): String
     login(username: String!, password: String!): String
     addMovie(title: String!, release_year: Int!, genre: String!): Movie
+    updateMovie(id: ID!, title: String, release_year: Int, genre: String): Movie
+    deleteMovie(id: ID!): Movie
   }
 
   type Movie { 
-    id: ID!
+    csvId: String
+    id: ID! 
     title: String!
     release_year: Int
     genre: String
@@ -34,6 +37,7 @@ const typeDefs = gql`
   }
 
   type Rating {
+   "csv id"
     movieId: ID!
     text: String!
     movie: Movie!

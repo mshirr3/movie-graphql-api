@@ -23,7 +23,7 @@ const resolvers = {
         },
         movie: async (_, { id }) => {
             try {
-                const movie = await Movie.findOne({ id })
+                const movie = await Movie.findById(id)
                 if (!movie) {
                     throw new GraphQLError('Movie not found', {
                         extensions: {
@@ -45,49 +45,55 @@ const resolvers = {
         },
         ratings: async (_, { movieId }) => {
             try {
-                const ratings = await Rating.find({ movieId })
-                if (ratings.length == 0) {
-                    throw new GraphQLError('No ratings for this movie was found', {
-                        extensions: {
-                            code: 'NOT_FOUND',
-                            http: { status: 404 }
-                        }
-                    })
-                }
-                return ratings
+                return await Rating.find({ movieId })
             } catch (err) {
                 if (err instanceof GraphQLError) throw err
                 throw new GraphQLError('Failed to fetch ratings', {
-                        extensions: {
-                            code: 'INTERNAL_SERVER_ERROR',
-                            http: { status: 500 }
-                        }
-                    })
+                    extensions: {
+                        code: 'INTERNAL_SERVER_ERROR',
+                        http: { status: 500 }
+                    }
+                })
             }
         }
     },
     Mutation: {
-        register: async(_, {username, password}) => {
-            const existingUser = await User.findOne({username})
+        register: async (_, { username, password }) => {
+            const existingUser = await User.findOne({ username })
             if (existingUser) {
-                throw new Error('username taken')
+                throw new GraphQLError('Username already taken', {
+                    extensions: {
+                        code: 'BAD_USER_INPU',
+                        http: { status: 400 }
+                    }
+                })
             }
 
-            const passwordHash = await bcrypt.hash(password,10)
-            const user = new User({username, passwordHash})
+            const passwordHash = await bcrypt.hash(password, 10)
+            const user = new User({ username, passwordHash })
             await user.save()
             return 'User registered successully'
         },
-        login: async(_, {username, password}) => {
+        login: async (_, { username, password }) => {
             dotenv.config()
-            const user = await User.findOne({username})
+            const user = await User.findOne({ username })
             if (!user) {
-                throw new Error('Invalid credentials')
+                throw new GraphQLError('Invalid credentials', {
+                    extensions: {
+                        code: 'UNAUTHORIZED',
+                        http: { status: 401 }
+                    }
+                })
             }
 
             const valid = await bcrypt.compare(password, user.passwordHash)
             if (!valid) {
-                throw new Error('invalid credentials')
+                throw new GraphQLError('Invalid credentials', {
+                    extensions: {
+                        code: 'UNAUTHORIZED',
+                        http: { status: 401 }
+                    }
+                })
             }
 
             const token = jwt.sign(
@@ -98,40 +104,53 @@ const resolvers = {
 
             return token
         },
-        addMovie: async (_, {title, release_year, genre}, context) => {
+        addMovie: async (_, { title, release_year, genre }, context) => {
             if (!context.user) {
                 throw new GraphQLError('Authentication required', {
                     extensions: {
                         code: 'UNAUTHORIZED',
-                        http: {status: 401}
+                        http: { status: 401 }
                     }
                 })
             }
-            const movie = new Movie({title, release_year, genre})
+            const movie = new Movie({ title, release_year, genre })
             return await movie.save()
+        },
+        updateMovie: async (_, {id, title, release_year,genre}, context) => {
+            if (!context.user) {
+                throw new GraphQLError('Authentication required', {
+                    extensions: {
+                        code: 'UNAUTHORIZED',
+                        http: { status: 401 }
+                    }
+                })
+            }
+            return await Movie.findByIdAndUpdate(id, {title,release_year, genre}, {new: true})
+        },
+        deleteMovie: async (_, {id}, context) => {
+            if (!context.user) {
+                throw new GraphQLError('Authentication required', {
+                    extensions: {
+                        code: 'UNAUTHORIZED',
+                        http: { status: 401 }
+                    }
+                })
+            }
+            return await Movie.findByIdAndDelete(id)
         }
     },
     Movie: {
         ratings: async (parent) => {
             try {
-               const ratings = await Rating.find({movieId: parent.id})
-            if (!ratings || ratings.length == 0) {
-                throw new GraphQLError('No ratings for this movie was found', {
-                        extensions: {
-                            code: 'NOT_FOUND',
-                            http: { status: 404 }
-                        }
-                    })
-            }
-            return ratings 
+                return await Rating.find({ movieId: parent.csvId })
             } catch (error) {
                 if (error instanceof GraphQLError) throw error
                 throw new GraphQLError('Failed to fetch ratings', {
-                        extensions: {
-                            code: 'INTERNAL_SERVER_ERROR',
-                            http: { status: 500 }
-                        }
-                    })
+                    extensions: {
+                        code: 'INTERNAL_SERVER_ERROR',
+                        http: { status: 500 }
+                    }
+                })
             }
         }
     }
