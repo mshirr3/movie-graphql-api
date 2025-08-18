@@ -5,6 +5,7 @@ import User from './models/user.js'
 import bcrypt from 'bcryptjs'
 import dotenv from 'dotenv'
 import jwt from 'jsonwebtoken'
+import Actor from './models/actor.js'
 const resolvers = {
     Query: {
         // returns an array of movies
@@ -42,6 +43,14 @@ const resolvers = {
                     }
                 })
             }
+        },
+        actors: async () => {
+            try {
+               return await Actor.find()
+            } catch (error) {
+                throw error
+            }
+            
         },
         ratings: async (_, { movieId }) => {
             try {
@@ -153,6 +162,9 @@ const resolvers = {
                 })
             }
         }
+    },
+    Actor: {
+        id: (actor) => actor._id.toString() // id resolves to mongo_id
     }
 }
 

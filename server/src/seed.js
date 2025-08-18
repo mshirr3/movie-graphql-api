@@ -4,16 +4,19 @@ import mongoose from 'mongoose'
 import dotenv from 'dotenv'
 import Movie from './models/movie.js'
 import Rating from './models/rating.js'
+import Actor from './models/actor.js'
+import dirtyJSON from 'dirty-json'
 
 dotenv.config()
 // mongodb setup
-mongoose.connect(process.env.DB_CONNECTION_STRING)
+console.log(process.env.DB_CONNECTION_STRING)
+mongoose.connect('mongodb://localhost:27017/moviedb')
 const db = mongoose.connection
 db.once('open', () => console.log('connected to Mongodb'))
 
 // Parse genres to only first genre
 function parseGenre(str) {
-    if(!str) return 'Unknown'
+    if (!str) return 'Unknown'
     try {
         const json = str.replace(/'/g, '"')
         const genres = JSON.parse(json)
@@ -26,7 +29,7 @@ function parseGenre(str) {
 
 const movies = []
 // read and insert movies
-fs.createReadStream('src/data/movies_metadata.csv')
+fs.createReadStream('data/movies_metadata.csv')
     .pipe(csv({ skiplines: 0 }))
     .on('data', (row) => {
         // filter out roes with missing title or id
@@ -38,7 +41,7 @@ fs.createReadStream('src/data/movies_metadata.csv')
             csvId: row.id,
             title: row.title,
             // make sure its Int
-            release_year: releaseYear ? parseInt(releaseYear): null,
+            release_year: releaseYear ? parseInt(releaseYear) : null,
             genre: parseGenre(row.genres),
             description: row.overview || ''
         })
@@ -57,7 +60,7 @@ fs.createReadStream('src/data/movies_metadata.csv')
     })
 
 const ratings = []
-fs.createReadStream('src/data/ratings_small.csv')
+fs.createReadStream('data/ratings_small.csv')
     .pipe(csv({ skiplines: 0 }))
     .on('data', (data) => {
         ratings.push({
@@ -75,7 +78,38 @@ fs.createReadStream('src/data/ratings_small.csv')
             console.error('Error inserting data', error)
             process.exit(1)
         }
-        finally {
-            mongoose.connection.close()
+    })
+
+    // map to ensure each actor has one doc only
+const actorMap = new Map()
+
+fs.createReadStream('data/credits.csv')
+    .pipe(csv())
+    .on('data', async (row) => {
+        try {
+           
+            // parsing with dirty json library
+            const cast = dirtyJSON.parse(row.cast)
+
+            // find the movie in mongodb, movie schema
+            const movie = await Movie.findOne({title:row.title})
+            if (!movie) return // skip if movie not found
+
+            for (const actor of cast) {
+                await Actor.updateOne(
+                    {name: actor.name}, // to prevent duplicates
+                    {
+                        $setOnInsert: { name: actor.name},
+                        $addToSet: {movies_played: movie._id}
+                    },
+                    {upsert:true}
+                )
+            }
+        } catch (error) {
+            console.error(`error parsing actors for movie ${row.id}`, error.message)
         }
+    })
+    .on('end', () => {
+        console.log('finished seeding actors')
+        mongoose.connection.close()
     })
