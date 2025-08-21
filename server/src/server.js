@@ -14,9 +14,14 @@ const app = express()
 async function startServer() {
   dotenv.config()
   // mongodb setup
-  mongoose.connect("mongodb://localhost:27017/moviedb")
-  const db = mongoose.connection
-  db.once('open', () => console.log('connected to Mongodb'))
+  mongoose.connect(process.env.DB_CONNECTION_STRING)
+
+  mongoose.connection.on('error', (err) => {
+    console.error('MongoDB connection error:', err)
+    process.exit(1)
+  })
+
+  mongoose.connection.once('open', () => console.log('Connected to MongoDB'))
 
   const server = new ApolloServer({
     typeDefs,
