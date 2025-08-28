@@ -9,7 +9,7 @@ const typeDefs = gql`
 
     ratings(movieId: ID!): [Rating]
     
-    actors: [Actor]!
+    actors (limit: Int, offset: Int): [Actor]!
   }  
 
   type Mutation {
