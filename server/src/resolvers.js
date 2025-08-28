@@ -44,13 +44,21 @@ const resolvers = {
                 })
             }
         },
-        actors: async () => {
+        actors: async (_, { limit = 50, offset = 0 }) => {
             try {
-               return await Actor.find()
+                const safeLimit = Math.min(limit || 50, 100) // cap to 100 max
+                return await Actor.find()
+                    .skip(offset)
+                    .limit(safeLimit)
             } catch (error) {
-                throw error
+                throw new GraphQLError('Failed to fetch actors', {
+                    extensions: {
+                        code: 'INTERNAL_SERVER_ERROR',
+                        http: { status: 500 }
+                    }
+                })
             }
-            
+
         },
         ratings: async (_, { movieId }) => {
             try {
