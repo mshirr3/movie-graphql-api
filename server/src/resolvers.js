@@ -39,7 +39,8 @@ const resolvers = {
                 throw new GraphQLError('Failed to fetch movie', {
                     extensions: {
                         code: 'INTERNAL_SERVER_ERROR',
-                        error: error.message
+                        error: error.message,
+                        http: {status: 404}
                     }
                 })
             }
